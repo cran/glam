@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Andrew Cooper" />
+
+
+<title>Generalized Linear and Additive Models (‘GLAM’)</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Generalized Linear and Additive Models
+(‘GLAM’)</h1>
+<h4 class="author">Andrew Cooper<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></h4>
+
+
+
+<p>This package provides methods for fitting generalized linear models
+(“GLM”s) and generalized additive models (“GAM”s). Linear and additive
+regression are useful modeling approaches real-valued response data.
+However, in many applications the response of interest is not continuous
+or even numerical in nature. For instance, results from polls typically
+have a binary response of either “yes” or “no”. Many engineering fields
+deal with discrete data values instead of a continuous response. In
+these situations, the assumption of Gaussian-distributed errors is not
+appropriate. <em>Generalized</em> regression methods model the
+expectation of the response under the assumption of an alternative,
+non-Gaussian data-generating distribution. They take advantage of the
+relative simplicity of a linear/additive modeling approach and apply it
+through the use of an appropriate <em>link</em> function. This vignette
+briefly overviews the fitting procedure for GLMs and GAMs implemented in
+this package, and provides simple illustrative example of the “glam”
+function in action.</p>
+<div id="fitting-glms" class="section level2">
+<h2>Fitting GLMs</h2>
+<p>Iterative Re-Weighted Least Squares (IRLS, <span class="citation">Chen and Shao (1993)</span>), is a common approach for
+fitting GLMs. IRLS is an iterative procedure that searches for
+coefficients for a linear model that maximize the Fisher scoring
+information; this is akin to finding the maximum likelihood estimator
+(MLE) for the coefficients. What’s powerful about the IRLS algorithm is
+its relative simplicity and modularity. As described in chapter 6 of
+<span class="citation">Hastie and Tibshirani (1990)</span>, employing
+IRLS requires only a few unique quantities. One is (obviously) the
+choice of link function, where the function evaluation and its
+derivative with respect to our expectation <span class="math inline">\(\mu\)</span> are used in the algorithms search. We
+also must provide an analytical form of the variance of our response
+<span class="math inline">\(Y\)</span>, which again will depend on the
+choice of link function. The rest of the quantities in IRLS are
+constant; so long as we have these quantities, we can implement this
+fitting approach for any GLM we please, and will (eventually) converge
+at the MLE.</p>
+</div>
+<div id="fitting-gams" class="section level2">
+<h2>Fitting GAMs</h2>
+<p>Although the structure of additive models is different from a linear
+approach, its fitting procedure is remarkably close to that of IRLS. In
+addition to the given smoothing functions we wish to employ for our fit
+(<span class="citation">Hastie and Tibshirani (1990)</span>), we need
+only specify the same quantities we needed for our GLM fit, including
+the choice of link function, its derivative, and the variance of our
+response <span class="math inline">\(Y\)</span>. The local scoring
+procedure detailed in Chapter 6 of <span class="citation">Hastie and
+Tibshirani (1990)</span> uses these quantities to iterativelt fit
+additive models using a <em>weighted</em> backfitting approach. The
+backfitting algorithm is a simple approach to fitting additive models
+that is detailed also in <span class="citation">Hastie and Tibshirani
+(1990)</span>, chapter 4.</p>
+</div>
+<div id="glam-fitting-examples" class="section level2">
+<h2>GLAM fitting examples</h2>
+<p>The ‘GLAM’ library takes advantage of GLM and GAM local scoring
+procedures to fit commonly-used regression models on non-Gaussian
+response data. We wrap our methods into one, easy-to-use function called
+<code>glam</code>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">glam</span>(X, Y, model, family, intercept, tol, max_iter)</span></code></pre></div>
+<p>There are four required arguments; a numeric matrix of covariate
+data, <span class="math inline">\(X\)</span>, a vector of responses,
+<span class="math inline">\(Y\)</span>, a choice of whether to fit a GLM
+or GAM, and the distributional family for which to model the response.
+The optional arguments are whether to include an intercept term or not
+(default is “TRUE”), the tolerance for which convergence is determined
+(default is <span class="math inline">\(1e-8\)</span>), and the maximum
+number of iterations allowed until convergence is deemed to have failed
+(default is <span class="math inline">\(100\)</span>).</p>
+<p>We provide some simple, examples of how to use our function for four
+different kinds of response data.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(glam)</span></code></pre></div>
+<p>We first generate some fake, 1-dimensional covariate data for which
+the following examples will use in generating different responses.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># generate random inputs</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">10</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">runif</span>(n))</span></code></pre></div>
+<div id="beta-regression" class="section level3">
+<h3>Beta regression</h3>
+<p>We first start with beta regression, which is the primary
+contribution of this package given the lack of beta regression fitting
+tools that are currently available for R. Beta regression is appropriate
+for response data that is bounded between 0 and 1; this is common when
+dealing with proportion or percentage data, such as modeling the
+proportion of people who answered in a certain way on a poll
+question.</p>
+<p>To fit a Beta GLM/GAM, we specify in our <code>glam</code> call that
+<code>family = &quot;beta&quot;</code>. We then compare the performance of a GLM
+(<code>model = &quot;linear&quot;</code>) with a GAM
+(<code>model = &quot;additive&quot;</code>) on generated response data that ranges
+from <span class="math inline">\(0\)</span> to <span class="math inline">\(1\)</span> in the given domain of <span class="math inline">\(X\)</span>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>Y <span class="ot">&lt;-</span> (X <span class="sc">-</span> <span class="fl">0.5</span>)<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="fl">0.5</span> <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="fl">1e-1</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>beta_glm <span class="ot">&lt;-</span> <span class="fu">glam</span>(<span class="fu">cbind</span>(X, X<span class="sc">^</span><span class="dv">2</span>), Y, <span class="at">model =</span> <span class="st">&quot;linear&quot;</span>, <span class="at">family =</span> <span class="st">&quot;beta&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>beta_gam <span class="ot">&lt;-</span> <span class="fu">glam</span>(<span class="fu">cbind</span>(X, X<span class="sc">^</span><span class="dv">2</span>), Y, <span class="at">model =</span> <span class="st">&quot;additive&quot;</span>, <span class="at">family =</span> <span class="st">&quot;beta&quot;</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">plot</span>(X, Y, <span class="at">xlab =</span> <span class="st">&quot;X&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;Y&quot;</span>, <span class="at">main =</span> <span class="st">&quot;Beta Regression Example&quot;</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="fu">lines</span>(X, beta_glm<span class="sc">$</span>mu, <span class="at">col =</span> <span class="st">&quot;red&quot;</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="fu">lines</span>(X, beta_gam<span class="sc">$</span>mu, <span class="at">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">&quot;bottomright&quot;</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">&quot;GLM&quot;</span>, <span class="st">&quot;GAM&quot;</span>), <span class="at">col =</span> <span class="fu">c</span>(<span class="st">&quot;red&quot;</span>, <span class="st">&quot;blue&quot;</span>), <span class="at">lwd =</span> <span class="dv">2</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" style="display: block; margin: auto;" /></p>
+<p>For both models we plot the fitted mean <span class="math inline">\(\mu\)</span> that is return by <code>glam</code>.
+We can also see the estimated coefficients from the GLM model are also
+returned:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>beta_glm<span class="sc">$</span>coef</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; [1]  0.6228513 -2.3475940  2.3634290</span></span></code></pre></div>
+</div>
+<div id="logisitic-regression" class="section level3">
+<h3>Logisitic regression</h3>
+<p>Logistic regression is possibly the most common instance of
+generalized regression. It is useful when response data is binary in
+nature; for instance, many surveys have questions where the answer
+recorded is only a “yes” or a “no” rather than a numerical value. In the
+current iteration of the GLAM package, only a GLM is available to fit,
+but hopefully a GAM version will be made available soon.</p>
+<p>To fit a GLM on some example binary data, we specify
+<code>family = &quot;binomial&quot;</code>. Note the response <span class="math inline">\(Y\)</span> must be coded numerically with two
+unique values. In this example we code the response as either <span class="math inline">\(0\)</span> for “failure” or <span class="math inline">\(1\)</span> for “success”.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, n)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>Y[<span class="fu">which</span>(X <span class="sc">&lt;=</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>)] <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(<span class="fu">sum</span>(X <span class="sc">&lt;=</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>), <span class="dv">1</span>, <span class="fl">0.9</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>Y[<span class="fu">which</span>(X <span class="sc">&gt;=</span> <span class="dv">2</span><span class="sc">/</span><span class="dv">3</span>)] <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(<span class="fu">sum</span>(X <span class="sc">&gt;=</span> <span class="dv">2</span><span class="sc">/</span><span class="dv">3</span>), <span class="dv">1</span>, <span class="fl">0.9</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>log_glm <span class="ot">&lt;-</span> <span class="fu">glam</span>(<span class="fu">cbind</span>(X, X<span class="sc">^</span><span class="dv">2</span>), Y, <span class="at">model =</span> <span class="st">&quot;linear&quot;</span>, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">plot</span>(X, Y, <span class="at">xlab =</span> <span class="st">&quot;X&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;Y&quot;</span>, <span class="at">main =</span> <span class="st">&quot;Binomial Regression Example&quot;</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="fu">lines</span>(X, log_glm<span class="sc">$</span>mu, <span class="at">col =</span> <span class="st">&quot;red&quot;</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">&quot;bottomright&quot;</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">&quot;GLM&quot;</span>), <span class="at">col =</span> <span class="fu">c</span>(<span class="st">&quot;red&quot;</span>), <span class="at">lwd =</span> <span class="dv">2</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" style="display: block; margin: auto;" /></p>
+</div>
+<div id="poisson-regression" class="section level3">
+<h3>Poisson regression</h3>
+<p>Poisson regression is another common example of generalized modeling.
+This is often used when the response of interest is a count of some
+kind. For instance, we may wish to model the expected number of times of
+a given event occurring under varying conditions.</p>
+<p>Poisson GLMs and GAMs can be fit by setting
+<code>family = &quot;poisson&quot;</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">rpois</span>(n, <span class="dv">3</span><span class="sc">*</span><span class="fu">rnorm</span>(n, <span class="at">mean =</span> <span class="dv">2</span><span class="sc">*</span>X, <span class="at">sd =</span> <span class="fl">1e-4</span>))</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>pois_glm <span class="ot">&lt;-</span> <span class="fu">glam</span>(<span class="fu">cbind</span>(X, X<span class="sc">^</span><span class="dv">2</span>), Y, <span class="at">model =</span> <span class="st">&quot;linear&quot;</span>, <span class="at">family =</span> <span class="st">&quot;poisson&quot;</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>pois_gam <span class="ot">&lt;-</span> <span class="fu">glam</span>(<span class="fu">cbind</span>(X, X<span class="sc">^</span><span class="dv">2</span>), Y, <span class="at">model =</span> <span class="st">&quot;additive&quot;</span>, <span class="at">family =</span> <span class="st">&quot;poisson&quot;</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; Backfitting algorithm failed to converge in 100 iterations.</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; Backfitting algorithm failed to converge in 100 iterations.</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; Backfitting algorithm failed to converge in 100 iterations.</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; Backfitting algorithm failed to converge in 100 iterations.</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; Backfitting algorithm failed to converge in 100 iterations.</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; Backfitting algorithm failed to converge in 100 iterations.</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; Backfitting algorithm failed to converge in 100 iterations.</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; Backfitting algorithm failed to converge in 100 iterations.</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">plot</span>(X, Y, <span class="at">xlab =</span> <span class="st">&quot;X&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;Y&quot;</span>, <span class="at">main =</span> <span class="st">&quot;Poisson Regression Example&quot;</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">lines</span>(X, pois_glm<span class="sc">$</span>mu, <span class="at">col =</span> <span class="st">&quot;red&quot;</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">lines</span>(X, pois_gam<span class="sc">$</span>mu, <span class="at">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">&quot;bottomright&quot;</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">&quot;GLM&quot;</span>, <span class="st">&quot;GAM&quot;</span>), <span class="at">col =</span> <span class="fu">c</span>(<span class="st">&quot;red&quot;</span>, <span class="st">&quot;blue&quot;</span>), <span class="at">lwd =</span> <span class="dv">2</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAHgCAMAAABKCk6nAAAA0lBMVEUAAAAAADoAAGYAAP8AOjoAOmYAOpAAZmYAZpAAZrY6AAA6ADo6AGY6OgA6OmY6OpA6ZpA6ZrY6kLY6kNtmAABmADpmAGZmOgBmOjpmOpBmZgBmZjpmkJBmkLZmkNtmtttmtv+QOgCQOjqQZgCQZjqQkGaQkLaQtpCQttuQtv+Q29uQ2/+2ZgC2Zjq2kDq2kGa225C227a229u22/+2/7a2/9u2///bkDrbkGbbtmbbtpDb27bb29vb/7bb////AAD/tmb/25D/27b//7b//9v///8zFhGYAAAACXBIWXMAAA7DAAAOwwHHb6hkAAASsUlEQVR4nO2dDXvrNhmG1dOdQrodYLRjAwZr2GCDenwddrIPaNLT+P//JSzJjiVbdmzJsuwnz31tPWlsv1J8Vx92lDciJ9CI1BUgcaFgcCgYHAoGh4LBoWBwKBgcCgaHgsGhYHAoGBwKBoeCwaFgcCgYHAoGh4LBoWBwKBgcCgaHgsGhYHAoGBwKBoeCwaFgcCgYHAoGh4LBoWBwKBgcCgYnqeCd0Pzirf38cStunjziFccprpoBfRhQiar+wru6XseNYhGCxdWj9Xyo4FZAHyg4nMAT1KIWLDZTxDsHBZ9hJ169K/55f69b3I+fCfHBH55Or/z7N0VT/JXqbY2H9W7F8Vd/+1aI11Vzrc7Y863691hsu/pYncKj2i2T5RUHff2pePXW3OwqqQrWXVxVf0VRZvFLcZB86sdP5cBT7PdyLzY/vhFXX+Tf3+oDizr8q4j4ui7BqEcEliBYnrnHU3soXrN+5eXvchfjobHbqQVVHfKpSWTy3+LkSl6/q5r21RstWB9ubHaWVAbrKc4SLLfeyR8PeX447VcWIsSbqoCsDqJLMOoRgyUI/ule/qubnTpN6pXLP/6n/Af5u/HQ3E3+LFqCfiyxW3Amm2nx8E6d8c3TMROl4Ju3+X+Nze6SdLC+4owu+kEVfvX1bfn3+fOnU+jiZxFPfFEeKCvxVj6zKUswqhmD5YzBmbYt/1GvvHjNr/+t9zMemruV7aXYWo64xhiszu1dXv4R6YNe7uuDzM3ukk6nv7M4W7DcULfun/7xRjosStGN9KY0LgU/mC/TrGYMliH41F/p7lo91raqMVnYw7Pu1XXXLludjlcL3jzp862DVwdVY7CUYG/uKqm3uIZg1fuqdnj8qqxFubP+WQkuB5qyWkY9opzjJQhWc5rqvBW96YM+re8/1Vv/mhsPzd06Bb/+Jj8NhPLMVXuYgo3N7pJO40Rncc1md7jVoWU1Xv/lp/s+waeXadYjBksYgxWtFlw8fv/nN0LYD8+14GKPv+tDivP50IjdaMEPdU26SjrXgk3B6s+rLPmu3G9QCzbqMT2LEdwag/Wzxy9P++iH9qDoEKw6ho0lojEGK8HmZmdJrjG4V/BOzZXvyuZez9+agltjcNRr9uUIbs6ii9P0a9VPWw8b01qn4PIkZvLy872a3xysWbTuDOvN7pJcs+jOMbi8CvifuqJXx7zfdo3BrVn0qZoxWI7g1nXwt/XYZDy0L0zdgvVNh/ICU+5iXwdrwcZmZ0mu6+AewfIq6VH9JdVzvQ7B1Z+EdR0caQhekmB9z+iP+UnUD3Iw1O8bGA/r3ToFy7NYPPX+q2KGqu9PybtFv3xrjsHWZldJ1p0sZ3GW4IOeQavOQ86iX38jX51zDP7uK11uWYJRjwhc1NuF2Qz3fs/XIdIFbweXIbhoVx9btyhSVoWCp6e62Iw10I2AgqPw/rPb+u2opFAwmRQKBoeCwaFgcCgYHAoGh4LBoWBwKBgcCgaHgsGhYHAoGBwKBoeCwaFgcCgYHAoGh4LBoWBwKBgcCgaHgsGhYHAoGBwKBoeCwZlYsCAzkUrwtOFIFxQMTiTBMmeBSvqz6/gMJAXPRBzBO5VeU35KnoITE0XwcXunfsq8QhScliiCX+51Trbs5omCExOxBRdkGwpOTKQxuNSqcwIGh7skRly5Dos3+Y6KXZk487il4FGIfOJzw+vgRSGMn1NGnHLH/iij76BdFqsXHCscChSMzjrG4NN3xAjBWfRI1jGL7pw8+4Uj/kTqoo/bM+laKXgmYo3BhzPfIEHBM8FJFjgUDA4Fg0PB4FAwOBQMDgWDQ8HgUDA4FAwOBYNDweBQMDgUDA4Fg0PB4FAwOBQMDgWDQ8HgUDA4FAwOBYNDweBQMDgUDA4Fg0PB4FAwOBQMDgWDQ8HgRPuEf2+GDgqejTiCd6JMVnmoHgSFI/5EEXxKRlqovnkKDkcCiJRG6ZSg48A0SmlhCwYn1hhcNmGOwdMzLlVapFl0leuuo/1SsD8iH3X2eB28MoTxc/j+U+7YH4XphANZuOBY4S4HCkZnCWMw0wnHZAmzaKYTXgzR3mxgOuFlEGsMZjrhhcBJFjgUDA4Fg0PB4FAwOBQMDgWDQ8HgUDA4FAwOBYNDweBQMDgUDA4Fg0PB4FAwOBQMDgWDQ8HgUDA4FAwOBYNDweBQMDgUDA4Fg0PB4FAwOBQMDgWDQ8HgUDA4FAwOBYNDweBQMDiRBGdCbNT3NnTl2qHgmYgjWKYBz8RG5rxjvui0RBGsMr4frh5zZnxPThTB6jsb9Lc1NL6zgemE54YtGJzIY7Dx9RwB4Yg/nEWDw+tgcCgYHAoGh4LBoWBwKBgcCgaHgsGhYHAoGBwKBoeCwaFgcCgYHAoGh4LBoWBwKBgcCgaHgsGhYHAoGBwKBoeCwaFgcCgYHAoGh4Lh2O/N3ygYjT0FQ9PwS8FgNP1SMBT7ll8KRsLhl4KBcOilYCBKv9fX1+azFIyC9nt9TcGY1H7t5ykYA+W3rZeCQZB+W72zgoIRKPy69Y4W/PJbd2bCJtmrd/nzrRAqnWF3OEhCE3GOPr6h1z5+rOB7maDwLMrvh49lWtLucIiIPOzVjT6+0Xobx4/uonfd6QlPqCzRmfpLuLhkpML4Ocvx2m/n8R5jcCbsFMFtZLst05BeXDrhuQXvG2PvBILV4FrQo1m23h1b8AzHd9zYCBF83J5twUUTfvXOSBrdFw6OOcdg19Q5dAzOBozBBQfdEXfOyHAFzziLdl8ZzTGLHhqOBCD1Ot4+ahDpOni6comb62F+eSdrnQzVS8HrROkd5JeCV4jWO8wvBa+O61F+KXhtlHqH+qXgdaGufEfopeBVcT3eLwWviErvGL8UvBr0fcmxfil4JVx7Nd+cgleCZ/PNKXgV+Oul4BVwHeKXghdP+aavn15QwetY8lXVsre2tV4/v5CCQxfNzINo/O8k2C+i4NBlb/NQ1bKvttWSHH+9FJyM84Kvw5tvR+SwHZOEa4devWCj+Qb4RRQMMQZPpBdTMMAsejK/mILXznR6KXiJGJOrYL8UvDimbL45BS+OSa6NDCh4UUzcfHMKXhZTN9+cghfF5M03p+AFEaH55hS8HOq39af0S8FLIUrzzSl4KYSsyumFgpdA0Kqrfih4AfiueR4CBaen0hvDLwWnJ2LzzSk4OWM/7zsWCk5LbL9xBT/fPkwZbggxs5C1t/mWdjpuuF53UecrEEXwy32ddLQj7WEkwaHLsfqOb2/zLa06bkTzdRc1oAJxWvBBqFSzs7fg0AWVfce3t/mWVh03IpuKu6ghFYjURb/cyyyzbcGR0wmvSbBHMqQFCc7z7OqRLbinlBG5zDqLSio434m7+SdZaxmDx+ntLCrZGKx4vv2As2gnzSztQ1jULLrkuO1OLX3J18H78Xr94Y2OudnP6peCZ2Y/s18KnpX97H4peEb2CfxS8Gzod3zn9kvBM1G+oT+7Xwqeg32td26/FByfSm8SvxQcmZPdFN2zhIJjYuhN5JeC42HaTeaXgmNh603ml4Kj0LCbZnqloeDpcelN5ZeCp6ZpN61efMGj3pI/7ezxRr4+pKV3cO/sKHJQvuGzcSffMUm4vmJGvUQx+qj62Lbd4YOvo0jR+N8PbMGjlsWddvZYTCc69Q732yiyeipwISEFt3f2OKXarn3ImMGXgkNKiS14XzXe+pDr63FzKwoOKCbyGFw33uqQ67F63UVyDB5UTtxZdD3wVod4yO0qkrPoxOzdF0Upr3rbULAva7CbU7An5hoNi9QVa0HBHlTLIxdvN6fg8dhuU9fmLBQ8Arvlpq7NMCh4KKbd1HUZAQUPobwgWp3dnIIHsDf1pq7MaCi4n711QZS6Nh5QcDd72+4a9VJwJ7XdNeul4A7sDySs1m5OwS4an0dYs14KttnvjZ555X1zCQVX7Bt2IfRScImtNkexm0cTvBNC58jaBWWb7Ulr2bWpaaZ/OYTc2pKbnxl6h62wsPZK95XVcQTvrh7zl/tNHihYLoAT7n1dm1zv3fUvaBLOXrk8vOuwYWukrL3CllUFEUXwcXunft48BQkWxn9nNtlixemXviWJplznW7sdXceg+lt7BS6MDCKK4Jd71T3n2c1TQ/CodMLDBDtanfzZ2xZPbl1e834j0wkWs3Cmoo0aD0O34IJsE7UFnzXT3uGUjMxt1h1m8LaOvboEn4kxCZHG4FLry31QSv/+MdjppjnaiXbv2xDrrEnfoDnZGLxiwcUsWnfSx220WXQ9xDYPcf3e0WA7u7C+vm2qWfSaBUcP1+5Wu9ibBJY6LRTciWPYdLJUtRoK7mCQ3kWr1VCwk3N6l9slN6FgF+da7zrcKii4TY/eFZktoeAmHb3zfj29sgUF2zT07ptMV7mZoGATQ+/61WoouKbSC6C1hoIrlF4ktRoKNt76AXOrCDql6jua5Ve8yjdl1TPHrf5S3/wgymdGFTK34FNzrfROW/4SCDml6t0c/VaOIVg/yhYu2Bxnh950XiUBp7T8XtfjdmMK/tknj8W/L7/53fIEtybG6//MyHmap9RxErrmHZXU3YMpeJPJPvpw8+XiBLtfC7TdfMgfeZfg05IZiSH4IB9md9kCBbfD13rlu+Vj152q/Tve/O95wtgQ+oLPryXwL6Fa9KYwBD9/9C5/+eRxcYIdK1qMzlm49zgbXrSX75wvt9xQLhYKoDv2aUOo4Kz4UylmWYbg4/ah6KGflia4/XKb6+jESMNqT21I2E+aQTpPszCO96Q7tlFB7+gv92UXfbAF57tN0UPnixdsDb4U7KBS2BT8/NF3f3pcuuDG3IqCHZSXSS3Bx+3nH71bnGDLXvdKWI7BBjt11yoT1nXwpvHMqEKizqKriaX7wpezaAfqVqVak5zpxcV3SvBB3uFanmAN+H2NFhOf0sBCYgu+NLv5ZQm+QL0XJfgC7eYXJnja6OvgggRfJhQMDgWDE34dXF3vZnqxjmvRDgWnI+xO1kP96evnD3+vHrgW7VBwOsLvRaubVzKhwj/V765FOxScjuY5OJNrwsRcsqPfCN7k7kU7FJwO582eQYKtJTv54epRZSZzLtqh4HT4nwNryY5qzmoJgGvRDgWnI1RwuWTn+Va9c1g8ci3aoeB0hAg2luzsyoxnD85FOxScjoBzYCzZKWfSMjWoa9FOJMHFFZmiI0tWc2VFxMSsveE8ypqwetMs2ZFTLEkxzXIt2okjeCeqLkTcuffoXEozdnHOGXrDeZQ1ZfWmWbJTuSyGYteinSiCjVn8zlg90hHOWqAUvlrJUUzX2pnxZU1avUmW7FRtWU6zvnMs2oki2JjFH85nm6XgmLAFU/DIHSVVLlKOwediRSfSLFqNEMb7Wf3hOIuOB6+D00HB4FAwOBQMDgWDQ8HgUDA4FAwOtmAyE4kETx12WbeHlxUmaWEUHD9M0sIoOH6YpIVRcPwwSQuj4PhhkhZGwfHDJC2MguOHSVoYBccPk7QwCo4fZoGFkfmhYHAoGBwKBoeCwaFgcCgYHAoGh4LBoWBwKBgcCgaHgsGZVvBBiDI5TPMX/zgqs0/H583HVCe3v5fGN8zzrRCb8NrILFgPXmFGMqlgmfqnSv9j/+If57iVKRu9zmmzBofuD64PDnNQ+QWDayNzUB5mMTylYJ3DI9u0fwmIo9PN7Dozcw0Mk6v0BD6CHa8quDY6y5nXyRnLlIItF/5iXIf6dAXNMDvrK7T9wjx/6Dno2GHWKli9+oN5Kg5egtuHZh5xGmGKX73GYCvM4dV/7v1mBHZt1tlF62ZWNjbrl4A4+hmfc2qHkV2kl2ArzE7o7K+htQmZgY5jFYIP3nOsOozM7DWB4CvffsmuTXbKFxybNXTRXu3XVZ3wLlqPoXWeQd/a+E9QxrKCSdbO8yrYClNnXw4KowX5TLXsMP7d21gWf5lUp9cLCyPxasFWGJ2u06dfclz7eXVvY1n8jY6AkapVA787WfYdiiKE/d0ZXmHWOQarjrD8mpD6l8A4Zd/qFcmqTu59q9IKc/C+cWqFybzDjIRvNoBDweBQMDgUDA4Fg0PB4FAwOBQMDgWDQ8HgUDA4FAwOBYNDweBQMDgUDA4Fg0PB4FAwOBQMDgWDQ8HgUDA4FAwOBYNDweBQMDiXLfj5Vn9ayfsTjMvnsgWXny2f53N+abhwwepznF45N9bCpQuWSc1mSaWQiksXXHTPn3tk3FgPFy/YOwXISrh4wcetQO6hKTi7+Z9XbtG1cOmCZT5Bzzxc6+DCBT/fqowo82QVTMJlCz5u1fj7cu+XfmcNXLTgYoKlr5D8kmGugosWfAlQMDgUDA4Fg0PB4FAwOBQMDgWDQ8HgUDA4FAwOBYNDweBQMDgUDA4Fg0PB4FAwOBQMDgWDQ8HgUDA4FAwOBYPzf1F1oAf2aoSWAAAAAElFTkSuQmCC" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="gamma-regression" class="section level2">
+<h2>Gamma regression</h2>
+<p>Finally, gamma regression is a common approach is a common approach
+for modeling continuous positive responses. Many situations produce
+response data that is inherently positive in nature, such as the heights
+or weights of individuals. While a normal approximation is often used in
+practice and typically works well in most situations, we may wish to use
+a model that enforces an appropriate constraint on the domain of <span class="math inline">\(Y\)</span>.</p>
+<p>To fit a gamma GLM or GAM, we simply specify
+<code>family = &quot;gamma&quot;</code>.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">rgamma</span>(n, <span class="at">shape =</span> <span class="dv">10</span>, <span class="at">scale =</span> <span class="dv">5</span><span class="sc">*</span>X)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>gamma_glm <span class="ot">&lt;-</span> <span class="fu">glam</span>(<span class="fu">cbind</span>(X, X<span class="sc">^</span><span class="dv">2</span>), Y, <span class="at">model =</span> <span class="st">&quot;linear&quot;</span>, <span class="at">family =</span> <span class="st">&quot;gamma&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>gamma_gam <span class="ot">&lt;-</span> <span class="fu">glam</span>(<span class="fu">cbind</span>(X, X<span class="sc">^</span><span class="dv">2</span>), Y, <span class="at">model =</span> <span class="st">&quot;additive&quot;</span>, <span class="at">family =</span> <span class="st">&quot;gamma&quot;</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="fu">plot</span>(X, Y, <span class="at">xlab =</span> <span class="st">&quot;X&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;Y&quot;</span>, <span class="at">main =</span> <span class="st">&quot;Gamma Regression Example&quot;</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="fu">lines</span>(X, gamma_glm<span class="sc">$</span>mu, <span class="at">col =</span> <span class="st">&quot;red&quot;</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="fu">lines</span>(X, gamma_gam<span class="sc">$</span>mu, <span class="at">col =</span> <span class="st">&quot;blue&quot;</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">&quot;bottomright&quot;</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">&quot;GLM&quot;</span>, <span class="st">&quot;GAM&quot;</span>), <span class="at">col =</span> <span class="fu">c</span>(<span class="st">&quot;red&quot;</span>, <span class="st">&quot;blue&quot;</span>), <span class="at">lwd =</span> <span class="dv">2</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" style="display: block; margin: auto;" /></p>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-chen1993iterative" class="csl-entry">
+Chen, Jiahua, and Jun Shao. 1993. <span>“Iterative Weighted Least
+Squares Estimators.”</span> <em>The Annals of Statistics</em>, 1071–92.
+</div>
+<div id="ref-hastie1990generalized" class="csl-entry">
+Hastie, T. J., and R. J. Tibshirani. 1990. <em>Generalized Additive
+Models</em>. Chapman &amp; Hall/CRC Monographs on Statistics &amp;
+Applied Probability. Taylor &amp; Francis. <a href="https://books.google.com/books?id=qa29r1Ze1coC">https://books.google.com/books?id=qa29r1Ze1coC</a>.
+</div>
+</div>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Virginia Tech Department of Statistics, <a href="mailto:ahcooper@vt.edu" class="email">ahcooper@vt.edu</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

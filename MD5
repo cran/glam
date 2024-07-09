@@ -1,0 +1,17 @@
+b18efbc0ada34d1a3e787bad44768bbe *DESCRIPTION
+09726741c1723bc601bddac4122a803e *LICENSE
+c9801ae63219da352e5227fcb85e6f82 *NAMESPACE
+259c944d2eaa1e5a024d6b08050d5202 *NEWS.md
+c100cee8792dde1196cdb31f9a92baa9 *R/fit.R
+1850683479f1cb3e02fe2277f9e9b307 *R/gam.R
+53ab20c4d314e60583c94c2d43ae41ff *R/glm.R
+72e2dd9dba4cbd13196a91195d929e7b *README.md
+7eb39092cd7422166061ce8515f9b7f3 *build/vignette.rds
+d33a973a9f321f74281e4d33e8a6e0c3 *inst/doc/glam.R
+71da6ff25c5947960fe1107b410ea06f *inst/doc/glam.Rmd
+6b15df5bb58fd138f463a2f2c478b576 *inst/doc/glam.html
+c7b5c7b96c62bd991c793b6e0441f239 *man/glam.Rd
+1006a600e7c46312689ddff39cb1b3d4 *tests/testthat.R
+7b2f9c921aa5cb5137aff9b2c5f809b8 *tests/testthat/test-fit.R
+71da6ff25c5947960fe1107b410ea06f *vignettes/glam.Rmd
+b9ee5744b53088d6c5055de2dc57d228 *vignettes/glam.bib
